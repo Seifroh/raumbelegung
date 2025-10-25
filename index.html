@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="de">
+    <head>
+        <meta charset="UTF-8">
+        <title>Raumbelegung – 60/40 Layout</title>
+
+        <!-- Libraries -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"><!-- optional -->
+        <script src="https://cdn.jsdelivr.net/npm/jschardet@3/dist/jschardet.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+        <!-- Styles -->
+        <style>
+            :root {
+                --card-bg:#e1f5fe;
+                --doctor-bg:#f0c0d0;
+                --psy-bg:#cce5ff;
+            }
+            body{
+                font-family:Arial,sans-serif;
+                margin:10px;
+                font-size:12px
+            }
+            h1{
+                font-size:16px;
+                margin-top:0
+            }
+            .controls{
+                margin-bottom:10px
+            }
+            #dropArea{
+                border:2px dashed #999;
+                padding:20px;
+                text-align:center;
+                margin-bottom:12px;
+                cursor:pointer;
+                background:#fafafa
+            }
+            .etage{
+                margin-bottom:20px
+            }
+            .etage h2{
+                margin:0 0 5px 0;
+                font-size:14px
+            }
+            .zimmer-container{
+                display:flex;
+                flex-wrap:wrap;
+                gap:10px
+            }
+            .zimmer{
+                width:140px;
+                min-height:60px;
+                border:1px solid #ccc;
+                background:#f0f0f0;
+                font-size:11px
+            }
+            .zimmer h3{
+                margin:0 0 3px 0;
+                font-size:12px
+            }
+            .zimmer.leer{
+                border:2px solid green;
+                background:#a2e182;                    
+            }
+            #parkplatz{
+                border:2px dashed #999;
+                background:#fffbe6;
+                min-height:60px;
+                margin-bottom:20px;
+                padding:5px;
+                display:flex;
+                flex-wrap:wrap;
+                gap:6px
+            }
+            #parkplatz h3{
+                width:100%;
+                margin:0 0 5px 0;
+                font-size:12px
+            }
+            .mitarbeiter{
+                margin:3px;
+                padding:3px;
+                border:1px solid #31708f;
+                cursor:move;
+                background:var(--card-bg);
+                display:flex;
+                align-items:center;
+                gap:4px
+            }
+            .mitarbeiter.doctor{
+                background:var(--doctor-bg)
+            }
+            .mitarbeiter.psy{
+                background:var(--psy-bg)
+            }
+            .mitarbeiter span.icon{
+                font-size:14px
+            }
+            @media print{
+                #dropArea,.controls,button{
+                    display:none
+                }
+            }
+        </style>
+    </head>
+    <body>
+
+        <h1>Raumbelegung</h1>
+
+        <div id="dropArea">CSV‑Datei hierher ziehen oder klicken, um auszuwählen</div>
+        <input type="file" id="csvInput" accept=".csv" style="display:none">
+
+        <div class="controls">
+            <button onclick="exportBelegung()">Belegung speichern</button>
+            <button onclick="zoom(1)">+</button>
+            <button onclick="zoom(-1)">−</button>
+        </div>
+
+        <div id="parkplatz" ondrop="drop(event, 'PARKPLATZ')" ondragover="allowDrop(event)">
+            <h3>Hier können Mitarbeiter geparkt werden</h3>
+        </div>
+
+        <div id="geb-container"></div>
+
+        <script>
+            let belegungData = {}, mitarbeiterData = {}, zimmerDetails = {}, zoomLevel = 1;
+
+            const dropArea = document.getElementById('dropArea');
+            const csvInput = document.getElementById('csvInput');
+
+            dropArea.addEventListener('click', () => csvInput.click());
+            dropArea.addEventListener('dragover', e => {
+                e.preventDefault();
+                dropArea.classList.add('hover')
+            });
+            dropArea.addEventListener('dragleave', () => dropArea.classList.remove('hover'));
+            dropArea.addEventListener('drop', e => {
+                e.preventDefault();
+                dropArea.classList.remove('hover');
+                const file = e.dataTransfer.files[0];
+                if (file)
+                    processFile(file)
+            });
+            csvInput.addEventListener('change', e => {
+                const file = e.target.files[0];
+                if (file)
+                    processFile(file)
+            });
+
+            function processFile(file) {
+                const reader = new FileReader();
+                reader.onload = ev => {
+                    const bytes = new Uint8Array(ev.target.result);
+                    let text;
+                    if (typeof jschardet !== 'undefined') {
+                        const guess = jschardet.detect(String.fromCharCode.apply(null, bytes)).encoding || 'windows-1252';
+                        text = new TextDecoder(guess).decode(bytes);
+                    } else {
+                        text = new TextDecoder('windows-1252').decode(bytes);
+                    }
+                    Papa.parse(text, {header: true, skipEmptyLines: true, complete: r => buildUI(r.data)});
+                };
+                reader.readAsArrayBuffer(file);
+            }
+
+            function allowDrop(ev) {
+                ev.preventDefault();
+            }
+            function drag(ev) {
+                ev.dataTransfer.setData('text', ev.target.id);
+            }
+            function drop(ev, zielId) {
+                ev.preventDefault();
+                const mid = ev.dataTransfer.getData('text');
+                const el = document.getElementById(mid);
+                if (!el)
+                    return;
+                if (zielId === 'PARKPLATZ') {
+                    document.getElementById('parkplatz').appendChild(el);
+                } else {
+                    const ziel = document.getElementById('zimmer-' + zielId);
+                    if (ziel)
+                        ziel.appendChild(el);
+                }
+                updateZimmerStile();
+            }
+            function zoom(delta) {
+                zoomLevel = Math.max(.5, zoomLevel + delta * 0.1);
+                document.body.style.transform = `scale(${zoomLevel})`;
+                document.body.style.transformOrigin = '0 0';
+            }
+
+            function buildUI(rows) {
+                belegungData = {};
+                mitarbeiterData = {};
+                zimmerDetails = {};
+                document.getElementById('geb-container').innerHTML = '';
+                const etagen = {};
+
+                rows.forEach(r => {
+                    const name = (r['Name'] || '').trim();
+                    const beruf = (r['Beruf'] || '').trim();
+                    const stunden = (r['Wochenstd'] || '').trim();
+                    const zimmer = (r['Zimmer'] || '').trim();
+                    const ebene = (r['Ebene'] || '').trim();
+                    const liege = (r['Liege'] || '').trim();
+                    const waschbecken = (r['Waschbecken'] || '').trim();
+
+                    /* Zimmer immer erfassen */
+                    if (zimmer) {
+                        if (!etagen[ebene])
+                            etagen[ebene] = new Set();
+                        etagen[ebene].add(zimmer);
+                        zimmerDetails[zimmer] = {liege, waschbecken};
+                    }
+                    /* Karte nur bei Namen */
+                    if (!name)
+                        return;
+                    const tage = ['Mo', 'Di', 'Mi', 'Do', 'Fr'].map(t => (r[t] || '').toLowerCase() === 'x' ? '❎' : '🅾️').join('');
+
+                    mitarbeiterData[name] = {name, beruf, stunden, zimmer, ebene, tage};
+                });
+
+                /* Etagen rendern */
+                Object.keys(etagen).forEach(eb => {
+                    const gebDiv = document.createElement('div');
+                    gebDiv.className = 'etage';
+                    const titleTxt = (/(Haus 7|LA)/i.test(eb) ? 'Gebäude ' : 'Ebene ') + eb;
+                    gebDiv.innerHTML = `<h2>${titleTxt}</h2>`;
+                    const zc = document.createElement('div');
+                    zc.className = 'zimmer-container';
+                    etagen[eb].forEach(z => {
+                        const det = zimmerDetails[z] || {};
+                        let symbols = '';
+                        if (det.liege === 'ja')
+                            symbols += '🛏️';
+                        if (det.liege === 'passt nicht rein')
+                            symbols += '❌🛏️';
+                        if (det.waschbecken === 'ja')
+                            symbols += ' 🚰';
+                        const zd = document.createElement('div');
+                        zd.className = 'zimmer';
+                        zd.id = 'zimmer-' + z;
+                        zd.ondrop = e => drop(e, z);
+                        zd.ondragover = allowDrop;
+                        zd.innerHTML = `<h3>${z} ${symbols}</h3>`;
+                        zc.appendChild(zd);
+                    });
+                    gebDiv.appendChild(zc);
+                    document.getElementById('geb-container').appendChild(gebDiv);
+                });
+
+// Mitarbeiterkarten ------------------------------------------
+                Object.values(mitarbeiterData).forEach(m => {
+                    const card = document.createElement('div');
+                    card.className = 'mitarbeiter';
+                    card.draggable = true;
+                    card.id = 'm-' + m.name.replace(/\s/g, '-');
+
+                    // Tooltip – hier stehen jetzt auch die Stunden
+                    card.title = `Beruf: ${m.beruf}\nWochenstd: ${m.stunden}\nTage: ${m.tage}`;
+
+                    // Icon ▸ 🅰️ / 🅿️ / Standard
+                    const icon = document.createElement('span');
+                    const lc = m.beruf.toLowerCase();
+                    if (lc.includes('arzt')) {
+                        icon.textContent = '🅰️';
+                        card.classList.add('doctor');
+                    } else if (lc.includes('psychologe')) {
+                        icon.textContent = '🅿️';
+                        card.classList.add('psy');
+                    } else {
+                        icon.textContent = '👤';
+                    }
+
+                    const nameSpan = document.createElement('span');
+                    nameSpan.textContent = m.name;               // **Stunden NICHT hier anzeigen**
+
+                    card.append(icon, nameSpan);
+                    card.ondragstart = drag;
+
+                    // Karte einsortieren ...
+                    if (m.zimmer && document.getElementById('zimmer-' + m.zimmer)) {
+                        document.getElementById('zimmer-' + m.zimmer).appendChild(card);
+                        (belegungData[m.zimmer] = belegungData[m.zimmer] || []).push(m.name);
+                    } else {
+                        document.getElementById('parkplatz').appendChild(card);
+                    }
+                });
+
+
+                updateZimmerStile();
+            }
+
+            function updateZimmerStile() {
+                document.querySelectorAll('.zimmer').forEach(z => {
+                    if (z.children.length <= 1)
+                        z.classList.add('leer');
+                    else
+                        z.classList.remove('leer');
+                });
+            }
+
+            function exportBelegung() {
+                const jsonStr = JSON.stringify(belegungData, null, 2);
+                const blob = new Blob([jsonStr], {type: 'application/json;charset=utf-8'});
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'belegung.json';
+                a.click();
+            }
+        </script>
+    </body>
+</html>
