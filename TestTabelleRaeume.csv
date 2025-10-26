@@ -4,58 +4,58 @@ Arzt 2;Arzt;24;101;0;ja;ja;;x;x;x;
 Therapeut 1;Therapeut;35;102;0;nein;nein;x;;x;x;x
 Psychologe 1;Psychologe;32;103;0;nein;ja;x;x;x;x;
 Psychologe 2;Psychologe;28;104;0;nein;nein;;;x;x;x
-Verwalung;Verwalung;30;105;0;nein;nein;x;x;x;x;x
+Verwaltung;Verwaltung;30;105;0;nein;nein;;;x;x;x
 Arzt 3;Arzt;38,5;106;0;ja;ja;x;x;x;x;x
 Arzt 4;Arzt;24;1010;4;ja;ja;;x;x;x;
 Therapeut 2;Therapeut;35;1020;4;nein;nein;x;;x;x;x
 Psychologe 3;Psychologe;32;1030;4;passt nicht rein;ja;x;x;x;x;
 Psychologe 4;Psychologe;28;1040;4;nein;nein;;;x;x;x
-Verwalung;Verwalung;30;1050;1;nein;nein;x;x;x;x;x
+Verwaltung;Verwaltung;30;1050;1;nein;nein;x;x;x;x;x
 Arzt 5;Arzt;38,5;1060;1;ja;ja;x;x;x;x;x
 Arzt 6;Arzt;24;1070;1;ja;ja;;x;x;x;
 Therapeut 3;Therapeut;35;1080;1;nein;nein;x;;x;x;x
 Psychologe 5;Psychologe;32;1150;1;nein;ja;x;x;x;x;
 Psychologe 6;Psychologe;28;2020;1;nein;nein;;;x;x;x
-Verwalung;Verwalung;30;2030;1;nein;nein;x;x;x;x;x
-Arzt 7;Arzt;38,5;2040;1;ja;ja;x;x;x;x;x
-Arzt 8;Arzt;24;2050;4;ja;ja;;x;x;x;
+Verwaltung;Verwaltung;30;2030;1;nein;nein;x;x;;;
+Arzt 7;Arzt;38,5;2040;1;ja;ja;x;;x;;
+Arzt 8;Arzt;24;2050;4;ja;ja;;x;;x;x
 Therapeut 4;Therapeut;35;2060;4;nein;nein;x;;x;x;x
 Psychologe 7;Psychologe;32;2070;4;nein;ja;x;x;x;x;
 Psychologe 8;Psychologe;28;2080;4;nein;nein;;;x;x;x
-Verwalung;Verwalung;30;2090;1;nein;nein;x;x;x;x;x
+Verwaltung;Verwaltung;30;2090;1;nein;nein;x;x;x;x;x
 Arzt 9;Arzt;38,5;2100;5;ja;ja;x;x;x;x;x
 Arzt 10;Arzt;24;2110;2;ja;ja;;x;x;x;
 Therapeut 5;Therapeut;35;3160;2;nein;nein;x;;x;x;x
 Psychologe 9;Psychologe;32;3170;2;nein;ja;x;x;x;x;
 Psychologe 10;Psychologe;28;3180;2;nein;nein;;;x;x;x
-Verwalung;Verwalung;30;3190;2;nein;nein;x;x;x;x;x
+Verwaltung;Verwaltung;20;3190;2;nein;nein;x;;x;;x
 Arzt 11;Arzt;38,5;3200;2;ja;ja;x;x;x;x;x
 Arzt 12;Arzt;24;3210;2;ja;ja;;x;x;x;
 Therapeut 6;Therapeut;35;3220;2;nein;nein;x;;x;x;x
 Psychologe 11;Psychologe;32;3230;2;passt nicht rein;ja;x;x;x;x;
 Psychologe 12;Psychologe;28;3240;2;nein;nein;;;x;x;x
-Verwalung;Verwalung;30;3250;3;nein;nein;x;x;x;x;x
+Verwaltung;Verwaltung;30;3250;3;nein;nein;;x;;x;
 Arzt 13;Arzt;38,5;4010;3;ja;ja;x;x;x;x;x
 Arzt 14;Arzt;24;4020;3;ja;ja;;x;x;x;
 Therapeut 7;Therapeut;35;4030;3;nein;nein;x;;x;x;x
 Psychologe 13;Psychologe;32;4040;3;nein;ja;x;x;x;x;
 Psychologe 14;Psychologe;28;4050;3;nein;nein;;;x;x;x
-Verwalung;Verwalung;30;4500;3;nein;nein;x;x;x;x;x
+Verwaltung;Verwaltung;30;4500;3;nein;nein;x;x;x;x;x
 Arzt 15;Arzt;38,5;4560;3;ja;ja;x;x;x;x;x
 Arzt 16;Arzt;24;4810;3;ja;ja;;x;x;x;
 Therapeut 8;Therapeut;35;5050;3;nein;nein;x;;x;x;x
 Psychologe 15;Psychologe;32;5060;5;nein;ja;x;x;x;x;
 Psychologe 16;Psychologe;28;5070;5;nein;nein;;;x;x;x
-Verwalung;Verwalung;30;5080;5;nein;nein;x;x;x;x;x
+Verwaltung;Verwaltung;30;5080;5;nein;nein;x;x;x;x;x
 Arzt 17;Arzt;38,5;5090;5;ja;ja;x;x;x;x;x
 Arzt 18;Arzt;24;5100;5;ja;ja;;x;x;x;
 Therapeut 9;Therapeut;35;5110;5;nein;nein;x;;x;x;x
 Psychologe 17;Psychologe;32;5120;5;nein;ja;x;x;x;x;
 Psychologe 18;Psychologe;28;5130;5;nein;nein;;;x;x;x
-Verwalung;Verwalung;30;5140;5;nein;nein;x;x;x;x;x
+Verwaltung;Verwaltung;30;5140;5;nein;nein;x;x;x;x;x
 ;;;1;LA;nein;nein;;;;;
 ;;;2;LA;nein;nein;;;;;
 ;;;3;LA;nein;nein;;;;;
 ;;;4;LA;nein;nein;;;;;
-Verwalung;Verwalung;;11;Haus 7;nein;nein;x;x;x;x;x
-Verwalung;Verwalung;;22;Haus 7;nein;nein;;x;x;x;
+Verwaltung;Verwaltung;;11;Haus 7;nein;nein;x;x;x;x;x
+Verwaltung;Verwaltung;;22;Haus 7;nein;nein;;x;x;x;

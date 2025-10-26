@@ -5,16 +5,16 @@
         <title>Raumbelegung – 60/40 Layout</title>
 
         <!-- Libraries -->
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"><!-- optional -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
         <script src="https://cdn.jsdelivr.net/npm/jschardet@3/dist/jschardet.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
         <!-- Styles -->
         <style>
-            :root {
+            :root{
                 --card-bg:#e1f5fe;
                 --doctor-bg:#f0c0d0;
-                --psy-bg:#cce5ff;
+                --psy-bg:#cce5ff
             }
             body{
                 font-family:Arial,sans-serif;
@@ -61,7 +61,7 @@
             }
             .zimmer.leer{
                 border:2px solid green;
-                background:#a2e182;                    
+                background:#a2e182
             }
             #parkplatz{
                 border:2px dashed #999;
@@ -102,6 +102,18 @@
                     display:none
                 }
             }
+            /* Badge für Match-Nummer */
+            .badge{
+                background:#8fce00;
+                color:#000;
+                border-radius:50%;
+                padding:0 4px;
+                font-size:10px;
+                font-weight:bold
+            }
+            .match-hover{
+                outline:2px solid #ff9800
+            }
         </style>
     </head>
     <body>
@@ -123,9 +135,11 @@
 
         <div id="geb-container"></div>
 
+        <!-- Hinweis-Liste für perfekte Paare -->
+        <div id="match-hinweise"></div>
+
         <script>
             let belegungData = {}, mitarbeiterData = {}, zimmerDetails = {}, zoomLevel = 1;
-
             const dropArea = document.getElementById('dropArea');
             const csvInput = document.getElementById('csvInput');
 
@@ -164,31 +178,31 @@
                 reader.readAsArrayBuffer(file);
             }
 
-            function allowDrop(ev) {
-                ev.preventDefault();
+            function allowDrop(e) {
+                e.preventDefault();
             }
-            function drag(ev) {
-                ev.dataTransfer.setData('text', ev.target.id);
+            function drag(e) {
+                e.dataTransfer.setData('text', e.target.id);
             }
-            function drop(ev, zielId) {
-                ev.preventDefault();
-                const mid = ev.dataTransfer.getData('text');
+            function drop(e, zid) {
+                e.preventDefault();
+                const mid = e.dataTransfer.getData('text');
                 const el = document.getElementById(mid);
                 if (!el)
                     return;
-                if (zielId === 'PARKPLATZ') {
+                if (zid === 'PARKPLATZ') {
                     document.getElementById('parkplatz').appendChild(el);
                 } else {
-                    const ziel = document.getElementById('zimmer-' + zielId);
+                    const ziel = document.getElementById('zimmer-' + zid);
                     if (ziel)
                         ziel.appendChild(el);
                 }
                 updateZimmerStile();
             }
-            function zoom(delta) {
-                zoomLevel = Math.max(.5, zoomLevel + delta * 0.1);
+            function zoom(d) {
+                zoomLevel = Math.max(.5, zoomLevel + d * 0.1);
                 document.body.style.transform = `scale(${zoomLevel})`;
-                document.body.style.transformOrigin = '0 0';
+                document.body.style.transformOrigin = '0 0'
             }
 
             function buildUI(rows) {
@@ -196,6 +210,7 @@
                 mitarbeiterData = {};
                 zimmerDetails = {};
                 document.getElementById('geb-container').innerHTML = '';
+                document.getElementById('match-hinweise').innerHTML = '';
                 const etagen = {};
 
                 rows.forEach(r => {
@@ -207,19 +222,26 @@
                     const liege = (r['Liege'] || '').trim();
                     const waschbecken = (r['Waschbecken'] || '').trim();
 
-                    /* Zimmer immer erfassen */
+                    /* Bitmaske für Arbeitstage */
+                    const bits = ((r['Mo'] || '').toLowerCase() === 'x' ? 1 << 4 : 0) |
+                            ((r['Di'] || '').toLowerCase() === 'x' ? 1 << 3 : 0) |
+                            ((r['Mi'] || '').toLowerCase() === 'x' ? 1 << 2 : 0) |
+                            ((r['Do'] || '').toLowerCase() === 'x' ? 1 << 1 : 0) |
+                            ((r['Fr'] || '').toLowerCase() === 'x' ? 1 : 0);
+
+                    /* Zimmer erfassen */
                     if (zimmer) {
                         if (!etagen[ebene])
                             etagen[ebene] = new Set();
                         etagen[ebene].add(zimmer);
                         zimmerDetails[zimmer] = {liege, waschbecken};
                     }
-                    /* Karte nur bei Namen */
+                    /* Karten nur bei Namen */
                     if (!name)
                         return;
-                    const tage = ['Mo', 'Di', 'Mi', 'Do', 'Fr'].map(t => (r[t] || '').toLowerCase() === 'x' ? '❎' : '🅾️').join('');
 
-                    mitarbeiterData[name] = {name, beruf, stunden, zimmer, ebene, tage};
+                    const tage = ['Mo', 'Di', 'Mi', 'Do', 'Fr'].map(t => (r[t] || '').toLowerCase() === 'x' ? '❎' : '🅾️').join('');
+                    mitarbeiterData[name] = {name, beruf, stunden, zimmer, ebene, tage, bits};
                 });
 
                 /* Etagen rendern */
@@ -251,17 +273,13 @@
                     document.getElementById('geb-container').appendChild(gebDiv);
                 });
 
-// Mitarbeiterkarten ------------------------------------------
+                /* Mitarbeiterkarten */
                 Object.values(mitarbeiterData).forEach(m => {
                     const card = document.createElement('div');
                     card.className = 'mitarbeiter';
                     card.draggable = true;
                     card.id = 'm-' + m.name.replace(/\s/g, '-');
-
-                    // Tooltip – hier stehen jetzt auch die Stunden
                     card.title = `Beruf: ${m.beruf}\nWochenstd: ${m.stunden}\nTage: ${m.tage}`;
-
-                    // Icon ▸ 🅰️ / 🅿️ / Standard
                     const icon = document.createElement('span');
                     const lc = m.beruf.toLowerCase();
                     if (lc.includes('arzt')) {
@@ -273,14 +291,10 @@
                     } else {
                         icon.textContent = '👤';
                     }
-
                     const nameSpan = document.createElement('span');
-                    nameSpan.textContent = m.name;               // **Stunden NICHT hier anzeigen**
-
+                    nameSpan.textContent = m.name;
                     card.append(icon, nameSpan);
                     card.ondragstart = drag;
-
-                    // Karte einsortieren ...
                     if (m.zimmer && document.getElementById('zimmer-' + m.zimmer)) {
                         document.getElementById('zimmer-' + m.zimmer).appendChild(card);
                         (belegungData[m.zimmer] = belegungData[m.zimmer] || []).push(m.name);
@@ -289,6 +303,56 @@
                     }
                 });
 
+                /* Perfekte Paare ermitteln – jetzt nur noch Überschneidungs-Check */
+                const staff = Object.values(mitarbeiterData);
+                const matches = [];
+                let midx = 0;
+
+                for (let i = 0; i < staff.length; i++) {
+                    for (let j = i + 1; j < staff.length; j++) {
+                        const a = staff[i], b = staff[j];
+
+                        // NEU: nur Überschneidung verbieten
+                        if ((a.bits & b.bits) === 0) {
+                            matches.push({id: ++midx, a: a.name, b: b.name});
+                        }
+                    }
+                }
+
+                console.log('Perfekte Paare', matches);
+
+                /* Hinweise anzeigen */
+                if (matches.length) {
+                    const div = document.getElementById('match-hinweise');
+                    let html = '<h2>Perfekte Paare</h2><ul>';
+                    matches.forEach(m => {
+                        html += `<li><span class="badge">${m.id}</span> ${m.a} ↔ ${m.b}</li>`;
+                    });
+                    html += '</ul>';
+                    div.innerHTML = html;
+                    /* Badge auch auf Karten kleben */
+                    matches.forEach(m => {
+                        [m.a, m.b].forEach(n => {
+                            const c = document.getElementById('m-' + n.replace(/\s/g, '-'));
+                            if (c) {
+                                const b = document.createElement('span');
+                                b.className = 'badge';
+                                b.textContent = m.id;
+                                c.appendChild(b);
+                                c.dataset.matchid = m.id;
+                            }
+                        });
+                    });
+                    /* Hover-Effekt */
+                    document.querySelectorAll('.badge').forEach(b => {
+                        b.parentElement.addEventListener('mouseenter', () => {
+                            document.querySelectorAll(`[data-matchid="${b.textContent}"]`).forEach(el => el.classList.add('match-hover'));
+                        });
+                        b.parentElement.addEventListener('mouseleave', () => {
+                            document.querySelectorAll(`[data-matchid="${b.textContent}"]`).forEach(el => el.classList.remove('match-hover'));
+                        });
+                    });
+                }
 
                 updateZimmerStile();
             }
